@@ -1,18 +1,15 @@
-#include <stdio.h>
-int main(){
-double a = 10.00;
-double b = 5.00;
-double x = 0.00;
-double y = 0.00;
-double xtmp;
-double ytmp;
-for(int i=0; i<10000; i++){
-    xtmp = (x * x) - (y * y) + a;
-    ytmp = (2 * x * y) + b;
-    x = xtmp;
-    y = ytmp;
-    printf("Iteration %d: x=%lf, y=%lf\n", i, x, y);
-}
-return 0;
-}
+#include "Mandelbrot.h"
 
+int mandelbrot(double a, double b, int max_iter){
+    double x = 0.0;
+    double y = 0.0;
+    int iter = 0;
+    while((x*x + y*y) <= 4.0 && iter < max_iter){
+        double xtmp = (x * x) - (y * y) + a;
+        double ytmp = (2 * x * y) + b;
+        x = xtmp;
+        y = ytmp;
+        iter++;
+}
+return iter;
+}
