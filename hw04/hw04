@@ -1,0 +1,66 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int rd_ppm(const char* path, unsigned char** px_out, int* width_out, int* height_out){
+    FILE *fp = fopen(path, "rb"); /* open file in binary */
+    if(!fp){
+        return 0;
+    }
+    char header[3] = {0};
+    int maxval = 0;
+
+    if (fscanf(fp, "%2s %d %d %d%*c", header, width_out, height_out, &maxval) != 4 || /* %2s = "P6", %d %d = width,height , %d = maxval, %*c = consume '\n'*/
+    strcmp(header, "P6") != 0 || maxval != 255 ||*width_out <= 0 || *height_out <= 0) {
+        fclose(fp);
+        return 0;
+    }
+    size_t size = (size_t)(*width_out) * (size_t)(*height_out) * 3; /*multiply by 3 for each pixel*/
+    unsigned char* bufferpx = (unsigned char*)malloc(size); /*allocates a heap buffer of (size) to hold pixels*/
+    if(!bufferpx) {
+        fclose(fp);
+        return 0;
+    }
+    size_t n = fread(bufferpx, 1, size, fp); /*read pixels*/
+    fclose(fp);
+    if(n != size){
+        free(bufferpx); /*free's the memory allocated if not all bytes were read*/
+        return 0;
+    }
+    *px_out = bufferpx;
+    return 1;
+}
+
+int write_ppm(const char* path,  const unsigned char* px_out, int width_out, int height_out){
+    if(!path || !px_out || width_out <= 0 || height_out <= 0){ /*same checks for inconsistencies*/
+        return 0;
+    }
+    FILE *fp = fopen(path, "wb"); /*open file for writing*/
+    if(!fp){
+        return 0;
+    }
+    if (fprintf(fp, "P6\n%d %d\n255\n", width_out, height_out) < 0) {
+        fclose(fp);
+        return 0;
+    }
+    size_t size = (size_t)width_out * (size_t)height_out * 3;
+    size_t n = fwrite(px_out, 1, size, fp);
+    fclose(fp);
+    return n == size;
+}
+
+int main(void){
+    unsigned char* px = NULL;
+    int out_w = 0;
+    int out_h = 0;
+    const char* in_path = "test.ppm";
+    if(!rd_ppm(in_path, &px, &out_w, &out_h)){
+        return 1;
+    }
+    if (!write_ppm("paste.ppm", px, out_w, out_h)){
+        free(px);
+        return 1;
+    }
+    free(px);
+    return 0;
+}
